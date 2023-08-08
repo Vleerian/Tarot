@@ -13,17 +13,18 @@ using Spectre.Console;
 using Spectre.Console.Cli;
 
 SQLiteAsyncConnection Database = new ("DeckDB.db");
+AnsiConsole.MarkupLine("[red]ooooooooooo   o      oooooooooo    ooooooo   ooooooooooo\n88  888  88  888      888    888 o888   888o 88  888  88 \n    888     8  88     888oooo88  888     888     888     \n    888    8oooo88    888  88o   888o   o888     888     \n   o888o o88o  o888o o888o  88o8   88ooo88      o888o[/]");
 
 string[] Owners = null;
 while(true)
 {
-    AnsiConsole.MarkupLine("[red]ooooooooooo   o      oooooooooo    ooooooo   ooooooooooo\n88  888  88  888      888    888 o888   888o 88  888  88 \n    888     8  88     888oooo88  888     888     888     \n    888    8oooo88    888  88o   888o   o888     888     \n   o888o o88o  o888o o888o  88o8   88ooo88      o888o[/]");
     var Operation = AnsiConsole.Prompt(new SelectionPrompt<string>()
     .Title("Select Operation")
     .AddChoices(new[] {
         "A. Process Cards Dumps", "B. Add Puppet(s)",
         "C. Select Users", "D. Pull puppet info",
-        "E. Find Owners"
+        "E. Find Legendaries", "F. Find Owners",
+        "G. List Puppets"
     }));
     switch(Operation[0])
     {
