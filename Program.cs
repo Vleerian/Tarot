@@ -44,11 +44,38 @@ while(true)
             break;
         case 'E':
             if(Owners != null)
+                await FindLegendaries(Owners);
+            else
+                AnsiConsole.MarkupLine("No user(s) selected.");
+            break;
+        case 'F':
+            if(Owners != null)
                 await FindOwner(Owners);
             else
                 AnsiConsole.MarkupLine("No user(s) selected.");
             break;
+        case 'G':
+            if(Owners != null)
+                await ListPuppets(Owners);
+            else
+                AnsiConsole.MarkupLine("No user(s) selected.");
+            break;
     }
+}
+
+async Task ListPuppets(string[] Users)
+{
+    //var puppets = await Database.QueryAsync<>()
+}
+
+async Task FindLegendaries(string[] Users)
+{
+    var owners = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView WHERE RarityInt = 5");
+    var table = new Table();
+    table.AddColumn("Owner").AddColumn("Card").AddColumn("Rarity").AddColumn("Season");
+    foreach(var owner in owners)
+        table.AddRow(owner.Owner, owner.Name, owner.Season.ToString(), owner.Rarity);
+    AnsiConsole.Write(table);
 }
 
 async Task FindOwner(string[] Users)
@@ -59,8 +86,27 @@ async Task FindOwner(string[] Users)
         string search = AnsiConsole.Ask<string>("Card Name (exit to stop)");
         if(search.Trim().ToLower() == "exit")
             return;
-        
+        var card = Helpers.SanitizeName(search);
+        var owners = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView WHERE Name = ?", card);
+        var table = new Table();
+        table.AddColumn("Owner").AddColumn("Card").AddColumn("Season");
+        foreach(var owner in owners)
+            table.AddRow(owner.Owner, owner.Name, owner.Season.ToString());
+        AnsiConsole.Write(table);
     }
+}
+
+async Task<DBCard[]> FindCard(string cardName, int season = 0)
+{
+    if(season < 0 || season > 3)
+        season = 0;
+    List<DBCard> cards;
+    if(season != 0)
+        cards = await Database.QueryAsync<DBCard>("SELECT * FROM Cards WHERE Name = ? AND Season = ?", cardName, season);
+    else
+        cards = await Database.QueryAsync<DBCard>("SELECT * FROM Cards WHERE Name = ?", cardName, season);
+    
+    return cards.ToArray();
 }
 
 async Task AddPuppets()

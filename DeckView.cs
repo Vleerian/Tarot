@@ -24,10 +24,13 @@ namespace NSDotnet.Models
 {
     public class DeckViewEntry
     {
-        public string Name { get; init; }
-        public string Region { get; init; }
-        public string Owner { get; init; }
+        public int ID { get; init; }
         public int Season { get; init; }
-        public int Rarity { get; init; }
+        public string Owner { get; init; }
+        public string Name { get; init; }
+        public string Rarity { get; init; }
+        public string Region { get; init; }
+        public float JunkValue { get; init; }
+        public int RarityInt { get; init; }
     }
 }
