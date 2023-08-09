@@ -22,12 +22,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 namespace NSDotnet.Models
 {
-    public class PuppetData
+    public class PuppetViewEntry
     {
         [PrimaryKey]
         public string Name { get; init; }
         public float Bank { get; init; }
-        public float Deck_Value { get; init; }
+        public float JunkValue { get; init; }
+        public float DeckValue { get; init; }
         public int Num_Cards { get; init; }
     }
 }

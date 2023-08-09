@@ -21,52 +21,79 @@ while(true)
     var Operation = AnsiConsole.Prompt(new SelectionPrompt<string>()
     .Title("Select Operation")
     .AddChoices(new[] {
-        "A. Process Cards Dumps", "B. Add Puppet(s)",
-        "C. Select Users", "D. Pull puppet info",
-        "E. Find Legendaries", "F. Find Owners",
-        "G. List Puppets"
+        "A. Select Users", "B. Pull puppet info",
+        "C. Find Legendaries", "D. List Puppets",
+        "E. Find Owners", "G. Add Puppet(s)",
+        "G. Process Cards Dumps"
     }));
     switch(Operation[0])
     {
         case 'A':
-            await CreateCardsDB();
-            break;
-        case 'B':
-            await AddPuppets();
-            break;
-        case 'C':
             Owners = await SelectUser();
             break;
-        case 'D':
+        case 'B':
             if(Owners != null)
                 await GetPuppetInfo(Owners);
             else
                 AnsiConsole.MarkupLine("No user(s) selected.");
             break;
-        case 'E':
+        case 'C':
             if(Owners != null)
                 await FindLegendaries(Owners);
             else
                 AnsiConsole.MarkupLine("No user(s) selected.");
             break;
-        case 'F':
+        case 'D':
+            if(Owners != null)
+                await ListPuppets(Owners);
+            else
+                AnsiConsole.MarkupLine("No user(s) selected.");
+            break;
+        case 'E':
             if(Owners != null)
                 await FindOwner(Owners);
             else
                 AnsiConsole.MarkupLine("No user(s) selected.");
             break;
+        case 'F':
+            await AddPuppets();
+            break;
         case 'G':
-            if(Owners != null)
-                await ListPuppets(Owners);
-            else
-                AnsiConsole.MarkupLine("No user(s) selected.");
+            await CreateCardsDB();
             break;
     }
 }
 
 async Task ListPuppets(string[] Users)
 {
-    //var puppets = await Database.QueryAsync<>()
+    var SortMode = AnsiConsole.Prompt(new SelectionPrompt<string>()
+    .Title("Select Sorting mode")
+    .AddChoices(new[] {
+        "1. DeckValue", "2. Junk Value + Bank",
+        "3. DV-JV"
+    }));
+    List<PuppetViewEntry> PuppetData;
+    switch(SortMode[0])
+    {
+        case '1':
+            PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue DESC");
+            break;
+        case '2':
+            PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue + Bank DESC");
+            break;
+        case '3':
+            PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue - JunkValuee DESC");
+            break;
+        default:
+            return;
+    }
+
+    var table = new Table();
+    table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards");
+    foreach(var puppet in PuppetData)
+        table.AddRow(puppet.Name, $"{puppet.Bank}", $"{puppet.JunkValue}", $"{puppet.DeckValue}", $"{Math.Round(puppet.DeckValue - puppet.JunkValue, 2)}", $"{puppet.Num_Cards}");
+    AnsiConsole.Write(table);
+
 }
 
 async Task FindLegendaries(string[] Users)
