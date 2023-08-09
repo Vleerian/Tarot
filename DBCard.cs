@@ -26,7 +26,7 @@ namespace NSDotnet.Models
     public class DBCard
     {
         public static readonly float[] JunkValues = new[]{
-            0.1f, 0.5f, 0.10f, 0.20f, 0.50f, 1.0f
+            0.01f, 0.05f, 0.10f, 0.20f, 0.50f, 1.0f
         };
         public static readonly string[] Rarities = new[]{
             "common","uncommon","rare","ultra-rare","epic","legendary"
