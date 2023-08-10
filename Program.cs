@@ -23,7 +23,7 @@ while(true)
     .AddChoices(new[] {
         "A. Select Users", "B. Pull puppet info",
         "C. Find Legendaries", "D. List Puppets",
-        "E. Find Owners", "G. Add Puppet(s)",
+        "E. Find Owners", "F. Add Puppet(s)",
         "G. Process Cards Dumps"
     }));
     switch(Operation[0])
