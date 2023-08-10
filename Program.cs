@@ -167,6 +167,8 @@ async Task AddPuppets()
     await Database.CreateTableAsync<DBPuppet>();
     // Insert them into the database
     await Database.InsertAllAsync(Pups);
+    AnsiConsole.MarkupLine($"{pups.Count()} puppets imported. Deleting duplicates.");
+    await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY User, Puppet )");
 }
 
 async Task<string[]> SelectUser()
