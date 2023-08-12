@@ -64,6 +64,9 @@ while(true)
     }
 }
 
+string Linkify(string puppet) =>
+    $"[link=https://nationstates.net/container={puppet}/nation={puppet}]{puppet}[/]";
+
 async Task ListPuppets(string[] Users)
 {
     var SortMode = AnsiConsole.Prompt(new SelectionPrompt<string>()
@@ -82,7 +85,7 @@ async Task ListPuppets(string[] Users)
             PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue + Bank DESC");
             break;
         case '3':
-            PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue - JunkValuee DESC");
+            PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue - DeckValue DESC");
             break;
         default:
             return;
@@ -91,7 +94,7 @@ async Task ListPuppets(string[] Users)
     var table = new Table();
     table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards");
     foreach(var puppet in PuppetData)
-        table.AddRow(puppet.Name, $"{puppet.Bank}", $"{puppet.JunkValue}", $"{puppet.DeckValue}", $"{Math.Round(puppet.DeckValue - puppet.JunkValue, 2)}", $"{puppet.Num_Cards}");
+        table.AddRow(Linkify(puppet.Name), $"{puppet.Bank}", $"{puppet.JunkValue}", $"{puppet.DeckValue}", $"{Math.Round(puppet.DeckValue - puppet.JunkValue, 2)}", $"{puppet.Num_Cards}");
     AnsiConsole.Write(table);
 
 }
@@ -102,7 +105,7 @@ async Task FindLegendaries(string[] Users)
     var table = new Table();
     table.AddColumn("Owner").AddColumn("Card").AddColumn("Rarity").AddColumn("Season");
     foreach(var owner in owners)
-        table.AddRow(owner.Owner, owner.Name, owner.Season.ToString(), owner.Rarity);
+        table.AddRow(Linkify(owner.Owner), owner.Name, owner.Season.ToString(), owner.Rarity);
     AnsiConsole.Write(table);
 }
 
@@ -168,7 +171,7 @@ async Task AddPuppets()
     // Insert them into the database
     await Database.InsertAllAsync(Pups);
     AnsiConsole.MarkupLine($"{pups.Count()} puppets imported. Deleting duplicates.");
-    await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY User, Puppet )");
+    await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY User, Puppet )"); 
 }
 
 async Task<string[]> SelectUser()
@@ -196,7 +199,7 @@ async Task GetPuppetInfo(string[] Users)
     NSAPI.Instance.UserAgent = "Tarot/0.5 (By Vleerian, vleerian@hotmail.com)";
     foreach(var Puppet in Puppets)
     {
-        Console.WriteLine($"Fetching data for {Puppet.Puppet}");
+        AnsiConsole.MarkupLine($"Fetching data for {Puppet.Puppet}");
         try{
             var Result = await NSAPI.Instance.GetAPI<CardsAPI>($"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={Puppet.Puppet}");
             var Deck = Result.Data.Deck.Select(D=>new DeckDB() {
@@ -217,7 +220,8 @@ async Task GetPuppetInfo(string[] Users)
         }
         catch(Exception e)
         {
-            Console.WriteLine($"Failed to get deck information for {Puppet}");
+            AnsiConsole.MarkupLine($"Failed to get deck information for {Puppet.Puppet}");
+            AnsiConsole.WriteException(e);
         }
     }
 }
