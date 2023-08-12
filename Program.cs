@@ -10,9 +10,19 @@ using NSDotnet.Models;
 using SQLite;
 
 using Spectre.Console;
+using Spectre.Console.Rendering;
 using Spectre.Console.Cli;
 
 SQLiteAsyncConnection Database = new ("DeckDB.db");
+Dictionary<string, Color> colors = new(){
+    {"common", Color.White},
+    {"uncommon", Color.Green},
+    {"rare",Color.Blue},
+    {"ultra-rare",Color.Purple},
+    {"epic",Color.Orange1},
+    {"legendary",Color.Magenta1}
+};
+
 AnsiConsole.MarkupLine("[red]ooooooooooo   o      oooooooooo    ooooooo   ooooooooooo\n88  888  88  888      888    888 o888   888o 88  888  88 \n    888     8  88     888oooo88  888     888     888     \n    888    8oooo88    888  88o   888o   o888     888     \n   o888o o88o  o888o o888o  88o8   88ooo88      o888o[/]");
 
 string[] Owners = null;
@@ -64,8 +74,28 @@ while(true)
     }
 }
 
-string Linkify(string puppet) =>
-    $"[link=https://nationstates.net/container={puppet}/nation={puppet}]{puppet}[/]";
+Markup Linkify(string puppet) =>
+    new Markup($"[link=https://nationstates.net/container={puppet}/nation={puppet}]{puppet}[/]");
+
+IRenderable MarkWrap(object item) =>
+    new Markup($"{item}");
+
+List<IRenderable> MarkWrapMany(params object[] items) =>
+    items.Select(I => (IRenderable)(new Markup($"{I}"))).ToList();
+
+async Task<BreakdownChart> GenerateBreakdown(DeckViewEntry[] Cards)
+{
+    var chart = new BreakdownChart()
+        .Width(10)
+        .HideTags()
+        .HideTagValues();
+    foreach(var set in Cards.OrderBy(C=>C.RarityInt).GroupBy(C=>C.RarityInt))
+    {
+        string rarity = set.First().Rarity;
+        chart.AddItem(rarity, set.Count(), colors[rarity]);
+    }
+    return chart;
+}
 
 async Task ListPuppets(string[] Users)
 {
@@ -91,10 +121,18 @@ async Task ListPuppets(string[] Users)
             return;
     }
 
+    List<DeckViewEntry> DeckData = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView");
+
     var table = new Table();
-    table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards");
+    table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards").AddColumn("Breakdown");
     foreach(var puppet in PuppetData)
-        table.AddRow(Linkify(puppet.Name), $"{puppet.Bank}", $"{puppet.JunkValue}", $"{puppet.DeckValue}", $"{Math.Round(puppet.DeckValue - puppet.JunkValue, 2)}", $"{puppet.Num_Cards}");
+    {
+        var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue, puppet.DeckValue,
+            Math.Round(puppet.DeckValue - puppet.JunkValue, 2), puppet.Num_Cards)
+            .Prepend(Linkify(puppet.Name))
+            .Append(await GenerateBreakdown(DeckData.Where(P=>P.Owner == puppet.Name).ToArray()));
+        table.AddRow(Items);
+    }
     AnsiConsole.Write(table);
 
 }
@@ -105,7 +143,7 @@ async Task FindLegendaries(string[] Users)
     var table = new Table();
     table.AddColumn("Owner").AddColumn("Card").AddColumn("Rarity").AddColumn("Season");
     foreach(var owner in owners)
-        table.AddRow(Linkify(owner.Owner), owner.Name, owner.Season.ToString(), owner.Rarity);
+        table.AddRow(MarkWrapMany(owner.Name, owner.Season, owner.Rarity).Prepend(Linkify(owner.Owner)));
     AnsiConsole.Write(table);
 }
 
