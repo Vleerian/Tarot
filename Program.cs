@@ -123,7 +123,8 @@ async Task ListPuppets(string[] Users)
 
     List<DeckViewEntry> DeckData = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView");
 
-    var table = new Table();
+    var table = new Table()
+        .MinimalDoubleHeadBorder();;
     table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards").AddColumn("Breakdown");
     foreach(var puppet in PuppetData)
     {
@@ -140,7 +141,8 @@ async Task ListPuppets(string[] Users)
 async Task FindLegendaries(string[] Users)
 {
     var owners = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView WHERE RarityInt = 5");
-    var table = new Table();
+    var table = new Table()
+        .MinimalDoubleHeadBorder();
     table.AddColumn("Owner").AddColumn("Card").AddColumn("Rarity").AddColumn("Season");
     foreach(var owner in owners)
         table.AddRow(MarkWrapMany(owner.Name, owner.Season, owner.Rarity).Prepend(Linkify(owner.Owner)));
