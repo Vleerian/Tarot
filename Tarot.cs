@@ -8,6 +8,7 @@ using Spectre.Console.Rendering;
 
 public partial class Tarot
 {
+    public readonly static string TAROT_VERSION = "0.6.1";
     // Setup database connection
     SQLiteAsyncConnection Database = new ("DeckDB.db");
     // List of owners used across the program
@@ -200,7 +201,6 @@ public partial class Tarot
         await Database.CreateTableAsync<PuppetData>();
         await Database.DeleteAllAsync<DeckDB>();
         await Database.DeleteAllAsync<PuppetData>();
-        NSAPI.Instance.UserAgent = "Tarot/0.5 (By Vleerian, vleerian@hotmail.com)";
         foreach(var Puppet in Puppets)
         {
             AnsiConsole.MarkupLine($"Fetching data for {Puppet.Puppet}");
