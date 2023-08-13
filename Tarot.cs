@@ -8,7 +8,7 @@ using Spectre.Console.Rendering;
 
 public partial class Tarot
 {
-    public readonly static string TAROT_VERSION = "0.6.1";
+    public readonly static string TAROT_VERSION = "0.7.1";
     // Setup database connection
     SQLiteAsyncConnection Database = new ("DeckDB.db");
     // List of owners used across the program
