@@ -37,12 +37,13 @@ public partial class Tarot
     public Tarot()
     {
         Functions = new() {
-            {"Select Users", SelectUser}, {"Pull Puppet Info", GetPuppetInfo},
+            {"Select User(s)", SelectUser}, {"Pull Puppet Info", GetPuppetInfo},
             {"Find Legendaries", FindLegendaries}, {"List Puppets", ListPuppets},
-            {"Find Owners", FindOwner}, {"Setup Functions", GenMenu}
+            {"Find Owners", FindOwner}, {"Generation Functions", GenMenu}
         };
         SetupFunctions = new() {
-            {"Add Puppets",AddPuppets}, {"Generate HTML", GenHTML},
+            {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
+            {"Generate Junk Links", Junk_Links},
             {"Create Database",CreateCardsDB}, {"Exit", null}
         };
 
@@ -87,7 +88,7 @@ public partial class Tarot
         while(true)
         {
             string Operation = AnsiConsole.Prompt(MainMenu);
-            if(Operation == "Select Users" || Operation == "Setup Functions")
+            if(Operation == "Select User(s)" || Operation == "Generation Functions")
                 await Functions[Operation](Owners);
             else if (Owners == null)
                 AnsiConsole.MarkupLine("No user(s) selected.");
@@ -127,7 +128,7 @@ public partial class Tarot
         table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards").AddColumn("Breakdown");
         foreach(var puppet in PuppetData)
         {
-            var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue, puppet.DeckValue,
+            var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue + puppet.Bank, puppet.DeckValue,
                 Math.Round(puppet.DeckValue - puppet.JunkValue, 2), puppet.Num_Cards)
                 .Prepend(Linkify(puppet.Name))
                 .Append(await GenerateBreakdown(DeckData.Where(P=>P.Owner == puppet.Name).ToArray()));
@@ -184,14 +185,19 @@ public partial class Tarot
         var Users = await Database.QueryScalarsAsync<string>("SELECT DISTINCT User FROM PuppetMap;");
         if(Users.Count == 0)
             throw new Exception("No users present in Database");
-        if(Users.Count == 1)
-            return;
-        var prompt = new MultiSelectionPrompt<string>().Title("Select Users");
-        foreach(var user in Users)
+        else if(Users.Count == 1)
         {
-            prompt.AddChoice(user);
+            Owners = Users.ToArray();
         }
-        Owners = AnsiConsole.Prompt(prompt).ToArray();
+        else
+        {
+            var prompt = new MultiSelectionPrompt<string>().Title("Select Users");
+            foreach(var user in Users)
+            {
+                prompt.AddChoice(user);
+            }
+            Owners = AnsiConsole.Prompt(prompt).ToArray();
+        }
     }
 
     async Task GetPuppetInfo(string[] Users)

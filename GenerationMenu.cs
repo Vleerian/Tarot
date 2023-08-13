@@ -41,8 +41,6 @@ public partial class Tarot
         await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY User, Puppet )"); 
     }
 
-
-
     async Task GenMenu(string[] users)
     {
         while(true)
@@ -54,11 +52,23 @@ public partial class Tarot
         }
     }
 
-    async Task GenHTML(string[] users)
+    async Task Puppet_Links(string[] users)
     {
         string[] Puppets = (await Database.QueryAsync<DBPuppet>("SELECT * FROM PuppetMap;"))
             .Select(P=>P.Puppet).ToArray();
-        await TarotHTML.GenerateHTML(Puppets);
+        await TarotHTML.Generate_Puppet_Links(Puppets);
+    }
+
+    async Task Junk_Links(string[] users)
+    {
+        float Threshhold = (float)Math.Round(AnsiConsole.Ask<float>("∆V Threshhold: "), 2);
+        var Puppets = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats WHERE DeckValue - JunkValue < ?;", Threshhold);
+        var Cards = (await Database.Table<DeckViewEntry>().ToListAsync())
+            .GroupBy( C => C.Owner)
+            .Where( G => Puppets.Any(P=>P.Name == G.First().Owner))
+            .Select( C => (C.First().Owner, C.ToArray()))
+            .ToArray();
+        await TarotHTML.Generate_Junk_Links(Cards);
     }
 
     async Task CreateCardsDB(string[] users)
@@ -85,7 +95,7 @@ public partial class Tarot
             // Create views
             await Database.ExecuteAsync("CREATE VIEW CardData AS SELECT ID, Season, Cards.Name, CommonInfo.Name AS Rarity, Region, JunkValue, Cards.Rarity AS RarityInt FROM Cards INNER JOIN CommonInfo ON Cards.Rarity = CommonInfo.Rarity;");
             await Database.ExecuteAsync("CREATE VIEW DeckView AS SELECT Deck.ID, Deck.Season, Owner, CardData.Name, CardData.Rarity, CardData.Region, CardData.JunkValue, CardData.RarityInt FROM Deck INNER JOIN CardData ON CardData.ID = Deck.ID AND CardData.Season = Deck.Season");
-            await Database.ExecuteAsync("CREATE VIEW PuppetStats AS SELECT Name, ROUND(Bank, 2) AS Bank, JunkValue, ROUND(Deck_Value, 2) AS DeckValue, Num_Cards FROM PuppetData INNER JOIN (SELECT Owner, COUNT(Owner) AS Cards, ROUND(SUM(JunkValue), 2) AS JunkValue FROM DeckView GROUP BY Owner) AS pups_1 ON PuppetData.Name = pups_1.Owner");
+            await Database.ExecuteAsync("CREATE VIEW PuppetStats AS SELECT Name, ROUND(Bank, 2) AS Bank, IFNULL(JunkValue, 0), ROUND(Deck_Value, 2) AS DeckValue, Num_Cards FROM PuppetData LEFT JOIN (SELECT Owner, COUNT(Owner) AS Cards, ROUND(SUM(JunkValue), 2) AS JunkValue FROM DeckView GROUP BY Owner) AS pups_1 ON PuppetData.Name = pups_1.Owner;");
         }
     }
 }
