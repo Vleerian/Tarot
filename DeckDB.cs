@@ -20,14 +20,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #endregion
 
-namespace NSDotnet.Models
+[Table("Deck")]
+public class DeckDB
 {
-    [Table("Deck")]
-    public class DeckDB
-    {
-        public int ID { get; init; }
-        public string Owner { get; init; }
-        public int Season { get; init; }
-        public int Rarity { get; init; }
-    }
+    public int ID { get; init; }
+    public string Owner { get; init; }
+    public int Season { get; init; }
+    public int Rarity { get; init; }
 }

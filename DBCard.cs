@@ -1,5 +1,7 @@
 using SQLite;
 
+using NSDotnet.Models;
+
 #region License
 /*
 Nationstates DotNet Core Library
@@ -20,34 +22,31 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #endregion
 
-namespace NSDotnet.Models
+[Table("Cards")]
+public class DBCard
 {
-    [Table("Cards")]
-    public class DBCard
-    {
-        public static readonly float[] JunkValues = new[]{
-            0.01f, 0.05f, 0.10f, 0.20f, 0.50f, 1.0f
-        };
-        public static readonly string[] Rarities = new[]{
-            "common","uncommon","rare","ultra-rare","epic","legendary"
-        };
-        public static int RarityToInt(string Rarity) =>
-            Array.IndexOf(Rarities, Rarity.ToLower());
-        public static string IntToRarity(int Rarity) =>
-            Rarities[Rarity];
+    public static readonly float[] JunkValues = new[]{
+        0.01f, 0.05f, 0.10f, 0.20f, 0.50f, 1.0f
+    };
+    public static readonly string[] Rarities = new[]{
+        "common","uncommon","rare","ultra-rare","epic","legendary"
+    };
+    public static int RarityToInt(string Rarity) =>
+        Array.IndexOf(Rarities, Rarity.ToLower());
+    public static string IntToRarity(int Rarity) =>
+        Rarities[Rarity];
 
-        public DBCard() { }
-        public DBCard(CardAPI card, int season) {
-            ID = card.ID;
-            Season = season;
-            Name = card.Name;
-            Region = card.Region;
-            Rarity = Array.IndexOf(Rarities, card.Rarity.ToLower());
-        }
-        public int ID { get; init; }
-        public int Season { get; init; }
-        public string Name { get; init; }
-        public string Region { get; init; }
-        public int Rarity { get; init; }
+    public DBCard() { }
+    public DBCard(CardAPI card, int season) {
+        ID = card.ID;
+        Season = season;
+        Name = card.Name;
+        Region = card.Region;
+        Rarity = Array.IndexOf(Rarities, card.Rarity.ToLower());
     }
+    public int ID { get; init; }
+    public int Season { get; init; }
+    public string Name { get; init; }
+    public string Region { get; init; }
+    public int Rarity { get; init; }
 }

@@ -20,17 +20,15 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #endregion
 
-namespace NSDotnet.Models
+[Table("DeckView")]
+public class DeckViewEntry
 {
-    public class DeckViewEntry
-    {
-        public int ID { get; init; }
-        public int Season { get; init; }
-        public string Owner { get; init; }
-        public string Name { get; init; }
-        public string Rarity { get; init; }
-        public string Region { get; init; }
-        public float JunkValue { get; init; }
-        public int RarityInt { get; init; }
-    }
+    public int ID { get; init; }
+    public int Season { get; init; }
+    public string Owner { get; init; }
+    public string Name { get; init; }
+    public string Rarity { get; init; }
+    public string Region { get; init; }
+    public float JunkValue { get; init; }
+    public int RarityInt { get; init; }
 }
