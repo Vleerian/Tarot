@@ -100,12 +100,16 @@ document.querySelectorAll(""a"").forEach(function(el) {{
     public static async Task Generate_Junk_Links((string Puppet, DeckViewEntry[] Cards)[] Junk)
     {
         string output = template_start;
+        int Number = 1;
+        int Count = Junk.Select(J=>J.Cards.Count()).Sum();
         foreach(var Puppet in Junk)
         {
             foreach(var card in Puppet.Cards)
             {
                 string uri = MakeURI(Puppet.Puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}");
-                output += $"<tr>\n\t<td><p><a target=\"_blank\" href=\"{uri}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n</tr>\n";
+                output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{uri}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n";
+                output += $"<td><a target=\"_blank\" href=\"{MakeURI(Puppet.Puppet, $"page=deck/card={card.ID}/season={card.Season}/gift=1")}\">Gift</a></p></td></tr>\n";
             }
         }
         output += template_end;
@@ -117,12 +121,15 @@ document.querySelectorAll(""a"").forEach(function(el) {{
         string output = template_start;
         string Containerize_Container = "";
         string Containerize_Nation = "";
+        int Number = 1;
+        int Count = puppets.Count();
         foreach(var puppet in puppets)
         {
             string canon = NSDotnet.Helpers.SanitizeName(puppet);
             Containerize_Container += $"@^.*\\.nationstates\\.net/(.*/)?container={canon}(/.*)?$ , {canon}\n";
             Containerize_Nation += $"@^.*\\.nationstates\\.net/(.*/)?nation={canon}(/.*)?$ , {canon}\n";
-            output += $"<tr>\n\t<td><p><a target=\"_blank\" href=\"{MakeURI(canon)}\">{canon}</a></p></td>\n";
+            output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
+            output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon)}\">{canon}</a></p></td>\n";
             foreach(KeyValuePair<string, string> lnk in Links)
                 output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, lnk.Value)}\">{lnk.Key}</a></p></td>\n";
             output += $"\t<td class=\"createcol\"><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=blank/template-overall=none/x-rces-cp?x-rces-cp-nation={canon}")}\">Create {canon}</a></p></td>\n";
