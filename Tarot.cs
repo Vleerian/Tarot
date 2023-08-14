@@ -8,14 +8,13 @@ using Spectre.Console.Rendering;
 
 public partial class Tarot
 {
-    public readonly static string TAROT_VERSION = "0.7.1";
+    public readonly static string TAROT_VERSION = "0.7.2";
+    public string User { get; private set; }
     // Setup database connection
     SQLiteAsyncConnection Database = new ("DeckDB.db");
-    // List of owners used across the program
-    string[] Owners = null;
 
     // Delegate for program functions
-    delegate Task TarotFunction(string[] Users);
+    delegate Task TarotFunction();
 
     // Color lookup for rarity
     public static Dictionary<string, Color> colors = new(){
@@ -27,24 +26,23 @@ public partial class Tarot
         {"legendary",Color.Magenta1}
     };
 
-    // Main Menu setup
+    // Menu setup
     Dictionary<string, TarotFunction> Functions;
     SelectionPrompt<string> MainMenu;
-    // Setup menu setup
     Dictionary<string, TarotFunction> SetupFunctions;
     SelectionPrompt<string> SetupMenu;
 
     public Tarot()
     {
         Functions = new() {
-            {"Select User(s)", SelectUser}, {"Pull Puppet Info", GetPuppetInfo},
-            {"Find Legendaries", FindLegendaries}, {"List Puppets", ListPuppets},
-            {"Find Owners", FindOwner}, {"Generation Functions", GenMenu}
+            {"Pull Puppet Info", GetPuppetInfo}, {"Find Legendaries", FindLegendaries},
+            {"List Puppets", ListPuppets}, {"Find Owners", FindOwner},
+            {"Generation Functions", GenMenu}
         };
         SetupFunctions = new() {
             {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
-            {"Generate Junk Links", Junk_Links},
-            {"Create Database",CreateCardsDB}, {"Exit", null}
+            {"Generate Junk Links", Junk_Links}, {"Create Database",CreateCardsDB},
+            {"Exit", null}
         };
 
         MainMenu = new SelectionPrompt<string>()
@@ -82,22 +80,20 @@ public partial class Tarot
     public async Task<int> Execute()
     {
         AnsiConsole.MarkupLine("[red]ooooooooooo   o      oooooooooo    ooooooo   ooooooooooo\n88  888  88  888      888    888 o888   888o 88  888  88 \n    888     8  88     888oooo88  888     888     888     \n    888    8oooo88    888  88o   888o   o888     888     \n   o888o o88o  o888o o888o  88o8   88ooo88      o888o[/]");
-        string Main = AnsiConsole.Ask<string>("Main Nation: ");
-        NSAPI.Instance.UserAgent = $"Tarot/{TAROT_VERSION} (By Vleerian, vleerian@hotmail.com in use by {Main})";
+        User = AnsiConsole.Ask<string>("Main Nation: ");
+        NSAPI.Instance.UserAgent = $"Tarot/{TAROT_VERSION} (By Vleerian, vleerian@hotmail.com in use by {User})";
 
         while(true)
         {
             string Operation = AnsiConsole.Prompt(MainMenu);
-            if(Operation == "Select User(s)" || Operation == "Generation Functions")
-                await Functions[Operation](Owners);
-            else if (Owners == null)
-                AnsiConsole.MarkupLine("No user(s) selected.");
+            if(Operation == "Generation Functions")
+                await Functions[Operation]();
             else
-                await Functions[Operation](Owners);
+                await Functions[Operation]();
         }
     }
 
-    async Task ListPuppets(string[] Users)
+    async Task ListPuppets()
     {
         var SortMode = AnsiConsole.Prompt(new SelectionPrompt<string>()
         .Title("Select Sorting mode")
@@ -134,11 +130,13 @@ public partial class Tarot
                 .Append(await GenerateBreakdown(DeckData.Where(P=>P.Owner == puppet.Name).ToArray()));
             table.AddRow(Items);
         }
+        table.AddRow(MarkWrapMany("Total", PuppetData.Sum(P=>P.Bank), PuppetData.Sum(P=>P.JunkValue), PuppetData.Sum(P=>P.DeckValue),
+            "-", PuppetData.Sum(P=>P.Num_Cards), "-"));
         AnsiConsole.Write(table);
 
     }
 
-    async Task FindLegendaries(string[] Users)
+    async Task FindLegendaries()
     {
         var owners = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView WHERE RarityInt = 5");
         var table = new Table()
@@ -149,7 +147,7 @@ public partial class Tarot
         AnsiConsole.Write(table);
     }
 
-    async Task FindOwner(string[] Users)
+    async Task FindOwner()
     {
         bool Run = true;
         while(Run)
@@ -180,29 +178,9 @@ public partial class Tarot
         return cards.ToArray();
     }
 
-    async Task SelectUser(string[] users)
+    async Task GetPuppetInfo()
     {
-        var Users = await Database.QueryScalarsAsync<string>("SELECT DISTINCT User FROM PuppetMap;");
-        if(Users.Count == 0)
-            throw new Exception("No users present in Database");
-        else if(Users.Count == 1)
-        {
-            Owners = Users.ToArray();
-        }
-        else
-        {
-            var prompt = new MultiSelectionPrompt<string>().Title("Select Users");
-            foreach(var user in Users)
-            {
-                prompt.AddChoice(user);
-            }
-            Owners = AnsiConsole.Prompt(prompt).ToArray();
-        }
-    }
-
-    async Task GetPuppetInfo(string[] Users)
-    {
-        DBPuppet[] Puppets = await Database.Table<DBPuppet>().Where(P=>Users.Contains(P.User)).ToArrayAsync();
+        DBPuppet[] Puppets = await Database.Table<DBPuppet>().Where(P=>P.User == Helpers.SanitizeName(User)).ToArrayAsync();
         await Database.CreateTableAsync<DeckDB>();
         await Database.CreateTableAsync<PuppetData>();
         await Database.DeleteAllAsync<DeckDB>();

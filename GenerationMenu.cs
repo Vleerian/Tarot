@@ -7,26 +7,13 @@ using Spectre.Console;
 
 public partial class Tarot
 {
-    async Task AddPuppets(string[] users)
+    async Task AddPuppets()
     {
         // Get basic info
         var Owner = AnsiConsole.Ask<string>("Puppet Owner: ");
-        AnsiConsole.MarkupLine("Comma separate lists of puppets. Type \"file\" to use a file");
-        var Puppets = AnsiConsole.Ask<string>("Puppet(s): ");
-        string[] pups;
-        // Turn the puppets into an array
-        if(Puppets.ToLower() == "file")
-        {
-            AnsiConsole.MarkupLine("Puppets must be on one line each.");
-            var Filename = AnsiConsole.Ask<string>("Enter filename: ");
-            pups = File.ReadAllLines(Filename);
-        }
-        else
-        {
-            pups = Puppets.Contains(',') ?
-                Puppets.Split(",", StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) :
-                new[] { Puppets };
-        }
+        AnsiConsole.MarkupLine("Puppets must be on one line each.");
+        var Filename = AnsiConsole.Ask<string>("Enter filename: ");
+        string[] pups = File.ReadAllLines(Filename);
         
         // Turn the array of puppets into DBPuppet objects
         var Pups = pups.Select(P=>new DBPuppet(){
@@ -41,25 +28,25 @@ public partial class Tarot
         await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY User, Puppet )"); 
     }
 
-    async Task GenMenu(string[] users)
+    async Task GenMenu()
     {
         while(true)
         {
             var Operation = AnsiConsole.Prompt(SetupMenu);
             if(Operation == "Exit")
                 return;
-            await SetupFunctions[Operation](Owners);
+            await SetupFunctions[Operation]();
         }
     }
 
-    async Task Puppet_Links(string[] users)
+    async Task Puppet_Links()
     {
         string[] Puppets = (await Database.QueryAsync<DBPuppet>("SELECT * FROM PuppetMap;"))
             .Select(P=>P.Puppet).ToArray();
         await TarotHTML.Generate_Puppet_Links(Puppets);
     }
 
-    async Task Junk_Links(string[] users)
+    async Task Junk_Links()
     {
         float Threshhold = (float)Math.Round(AnsiConsole.Ask<float>("∆V Threshhold: "), 2);
         var Puppets = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats WHERE DeckValue - JunkValue < ?;", Threshhold);
@@ -71,7 +58,7 @@ public partial class Tarot
         await TarotHTML.Generate_Junk_Links(Cards);
     }
 
-    async Task CreateCardsDB(string[] users)
+    async Task CreateCardsDB()
     {
         AnsiConsole.MarkupLine("Note: You are reuqired to download the cards dumps yourself.");
         // Create the DBCard table
