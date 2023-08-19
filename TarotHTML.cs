@@ -115,12 +115,11 @@ document.querySelectorAll(""a"").forEach(function(el) {{
                 {
                     output += $"<td><p>{Puppet.name} Issue {Issue.IssueID}</p>";
                     foreach(var opt in Issue.Options.OrderBy(I=>I.OptionID))
-                        output += $"<p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=enact_dilemma/choice-{opt.OptionID}=1/dilemma={Issue.IssueID}")}\">Option {opt.OptionID}</a></p>";
+                        output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=enact_dilemma/choice-{opt.OptionID}=1/dilemma={Issue.IssueID}")}\">Option {opt.OptionID}</a></p></td>";
                     output += "</td>\n";
                     int option = Issue.Options.MinBy(I=>I.OptionID).OptionID;
                     
                 }
-                output += $"";
                 output += $"</tr>\n";
             }
         }
