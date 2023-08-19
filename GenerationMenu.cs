@@ -10,22 +10,42 @@ public partial class Tarot
     async Task AddPuppets()
     {
         // Get basic info
-        var Owner = AnsiConsole.Ask<string>("Puppet Owner: ");
-        AnsiConsole.MarkupLine("Puppets must be on one line each.");
+        AnsiConsole.MarkupLine("Read the documentation for the puppet file format");
         var Filename = AnsiConsole.Ask<string>("Enter filename: ");
-        string[] pups = File.ReadAllLines(Filename);
-        
-        // Turn the array of puppets into DBPuppet objects
-        var Pups = pups.Select(P=>new DBPuppet(){
-            Puppet = Helpers.SanitizeName(P),
-            User = Owner
-        });
-
+        var Lines = File.ReadAllLines(Filename);
+        // Convert CSV to a format that's nice to work with
+        (string Puppet, string Password)[] pups = Lines
+            .Select(P=>{
+                var x = P.Split(',', StringSplitOptions.TrimEntries);
+                return (x[0], x[1]);
+            }).ToArray();
         await Database.CreateTableAsync<DBPuppet>();
-        // Insert them into the database
-        await Database.InsertAllAsync(Pups);
+        AnsiConsole.MarkupLine("Tarot will now ping all your nations to get X-Autologin");
+        
+        await Database.RunInTransactionAsync(tran => {
+            foreach(var pup in pups)
+            {
+                AnsiConsole.MarkupLine($"Pinging [yellow]{pup.Puppet}[/]");
+                NSAPI.Instance.Auth = new NSAuth(NSDotnet.Enums.AuthType.Password, pup.Password);
+                // Why is there no async internal transaction?
+                Thread.Sleep(600);
+                var Result = NSAPI.Instance.MakeRequest($"https://www.nationstates.net/cgi-bin/api.cgi?nation={pup.Puppet}&q=ping")
+                    .GetAwaiter().GetResult();
+                IEnumerable<string>? Values;
+                bool AutoLogin = Result.Headers.TryGetValues("X-Autologin", out Values);
+                if(AutoLogin)
+                    tran.Insert(new DBPuppet(){
+                        Puppet = Helpers.SanitizeName(pup.Puppet),
+                        Password = Values.First()
+                    });
+                else
+                    AnsiConsole.MarkupLine($"[red]Failed to ping {pup.Puppet}[/]");
+            }
+        });
+        
+        // Remove dupes
         AnsiConsole.MarkupLine($"{pups.Count()} puppets imported. Deleting duplicates.");
-        await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY User, Puppet )"); 
+        await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY Puppet, Password )"); 
     }
 
     async Task GenMenu()

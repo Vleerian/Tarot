@@ -126,7 +126,7 @@ public partial class Tarot
         {
             var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue + puppet.Bank, puppet.DeckValue,
                 Math.Round(puppet.DeckValue - puppet.JunkValue, 2), puppet.Num_Cards)
-                .Prepend(Linkify(puppet.Name))
+                .Prepend(Linkify(Helpers.SanitizeName(puppet.Name)))
                 .Append(await GenerateBreakdown(DeckData.Where(P=>P.Owner == puppet.Name).ToArray()));
             table.AddRow(Items);
         }
@@ -180,7 +180,7 @@ public partial class Tarot
 
     async Task GetPuppetInfo()
     {
-        DBPuppet[] Puppets = await Database.Table<DBPuppet>().Where(P=>P.User == Helpers.SanitizeName(User)).ToArrayAsync();
+        DBPuppet[] Puppets = await Database.Table<DBPuppet>().ToArrayAsync();
         await Database.CreateTableAsync<DeckDB>();
         await Database.CreateTableAsync<PuppetData>();
         await Database.DeleteAllAsync<DeckDB>();

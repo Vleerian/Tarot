@@ -23,6 +23,6 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 [Table("PuppetMap")]
 public class DBPuppet
 {
-    public string User { get; init; }
-    public string Puppet { get; init;}
+    public string Puppet { get; init; }
+    public string Password { get; init; }
 }
