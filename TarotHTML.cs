@@ -109,15 +109,18 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             foreach(var Issue in Puppet.Issues)
             {
                 output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-                output += $"<td><p><a target=\"_blank\" href=\"";
                 if(Issue.IssueID == 407)
-                    output += MakeURI(canon, "page=show_dilemma/dilemma=407/template-overall=none");
+                    output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "page=show_dilemma/dilemma=407/template-overall=none")}\">{canon} Issue {Issue.IssueID}</a></p></td>\n";
                 else
                 {
+                    output += $"<td><p>{Puppet.name} Issue {Issue.IssueID}</p>";
+                    foreach(var opt in Issue.Options.OrderBy(I=>I.OptionID))
+                        output += $"<p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=enact_dilemma/choice-{opt.OptionID}=1/dilemma={Issue.IssueID}")}\">Option {opt.OptionID}</a></p>";
+                    output += "</td>\n";
                     int option = Issue.Options.MinBy(I=>I.OptionID).OptionID;
-                    output += MakeURI(canon, $"page=enact_dilemma/choice-{option}=1/dilemma={Issue.IssueID}");
+                    
                 }
-                output += $"\">{canon} Issue {Issue.IssueID}</a></p></td>\n";
+                output += $"";
                 output += $"</tr>\n";
             }
         }
