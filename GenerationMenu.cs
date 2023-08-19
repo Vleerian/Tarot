@@ -78,6 +78,26 @@ public partial class Tarot
         await TarotHTML.Generate_Junk_Links(Cards);
     }
 
+    async Task Issues_Links()
+    {
+        var Puppets = await Database.Table<DBPuppet>().ToArrayAsync();
+        List<NationAPI> Issues = new();
+        foreach(var puppet in Puppets)
+        {
+            AnsiConsole.MarkupLine($"Fetching issues data for [yellow]{puppet.Puppet}[/]");
+            await Task.Delay(600);
+            NSAPI.Instance.Auth = new NSAuth(NSDotnet.Enums.AuthType.Autologin, puppet.Password);
+            var Request = await NSAPI.Instance.GetAPI<NationAPI>($"https://www.nationstates.net/cgi-bin/api.cgi?nation={puppet.Puppet}&q=name+issues");
+            if(Request.Response.StatusCode != System.Net.HttpStatusCode.OK)
+            {
+                AnsiConsole.MarkupLine($"[red]Failed[/]");
+                continue;
+            }
+            Issues.Add(Request.Data);
+        }
+        await TarotHTML.Generate_Issue_Links(Issues.ToArray());
+    }
+
     async Task CreateCardsDB()
     {
         AnsiConsole.MarkupLine("Note: You are reuqired to download the cards dumps yourself.");

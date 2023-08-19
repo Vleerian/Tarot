@@ -42,7 +42,7 @@ public partial class Tarot
         SetupFunctions = new() {
             {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
             {"Generate Junk Links", Junk_Links}, {"Create Database",CreateCardsDB},
-            {"Exit", null}
+            {"Generate Issue Links", Issues_Links}, {"Exit", null}
         };
 
         MainMenu = new SelectionPrompt<string>()
@@ -98,8 +98,9 @@ public partial class Tarot
         var SortMode = AnsiConsole.Prompt(new SelectionPrompt<string>()
         .Title("Select Sorting mode")
         .AddChoices(new[] {
-            "1. DeckValue", "2. Junk Value + Bank",
-            "3. DV-JV"
+            "1. DeckValue", "2. Junk Value",
+            "3. Bank", "4. NumCards", "5. DV-JV",
+            "6. JV + Bank"
         }));
         List<PuppetViewEntry> PuppetData;
         switch(SortMode[0])
@@ -108,10 +109,19 @@ public partial class Tarot
                 PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue DESC");
                 break;
             case '2':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue + Bank DESC");
+                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue DESC");
                 break;
             case '3':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue - DeckValue DESC");
+                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY Bank DESC");
+                break;
+            case '4':
+                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY Num_Cards DESC");
+                break;
+            case '5':
+                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue - JunkValue DESC");
+                break;
+            case '6':
+                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue + Bank DESC");
                 break;
             default:
                 return;

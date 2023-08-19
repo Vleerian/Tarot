@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 
 using NSDotnet;
+using NSDotnet.Models;
 
 ///<summary>
 /// The purpose of this class is to provide equivalent functionality
@@ -97,6 +98,33 @@ document.querySelectorAll(""a"").forEach(function(el) {{
         $"https://www.nationstates.net/container={puppet}/nation={puppet}/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian";
 
 
+    public static async Task Generate_Issue_Links(NationAPI[] Issues)
+    {
+        string output = template_start;
+        int Number = 1;
+        int Count = Issues.Sum(I => I.Issues.Length);
+        foreach(var Puppet in Issues)
+        {
+            string canon = NSDotnet.Helpers.SanitizeName(Puppet.name);
+            foreach(var Issue in Puppet.Issues)
+            {
+                output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"";
+                if(Issue.IssueID == 407)
+                    output += MakeURI(canon, "page=show_dilemma/dilemma=407/template-overall=none");
+                else
+                {
+                    int option = Issue.Options.MinBy(I=>I.OptionID).OptionID;
+                    output += MakeURI(canon, $"page=enact_dilemma/choice-{option}=1/dilemma={Issue.IssueID}");
+                }
+                output += $"\">{canon} Issue {Issue.IssueID}</a></p></td>\n";
+                output += $"</tr>\n";
+            }
+        }
+        output += template_end;
+        await File.WriteAllTextAsync("issue_links.html", output);
+    }
+
     public static async Task Generate_Junk_Links((string Puppet, DeckViewEntry[] Cards)[] Junk)
     {
         string output = template_start;
@@ -109,7 +137,7 @@ document.querySelectorAll(""a"").forEach(function(el) {{
                 string uri = MakeURI(Puppet.Puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}");
                 output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
                 output += $"<td><p><a target=\"_blank\" href=\"{uri}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n";
-                output += $"<td><a target=\"_blank\" href=\"{MakeURI(Puppet.Puppet, $"page=deck/card={card.ID}/season={card.Season}/gift=1")}\">Gift</a></p></td></tr>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(Puppet.Puppet, $"page=deck/card={card.ID}/season={card.Season}/gift=1")}\">Gift</a></p></td></tr>\n";
             }
         }
         output += template_end;
