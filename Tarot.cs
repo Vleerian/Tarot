@@ -29,20 +29,22 @@ public partial class Tarot
     // Menu setup
     Dictionary<string, TarotFunction> Functions;
     SelectionPrompt<string> MainMenu;
-    Dictionary<string, TarotFunction> SetupFunctions;
+    Dictionary<string, TarotFunction> ConfigFunctions;
     SelectionPrompt<string> SetupMenu;
 
     public Tarot()
     {
         Functions = new() {
-            {"Pull Puppet Info", GetPuppetInfo}, {"Find Legendaries", FindLegendaries},
-            {"List Puppets", ListPuppets}, {"Find Owners", FindOwner},
-            {"Generation Functions", GenMenu}
+            {"Fetch Puppet Info", GetPuppetInfo}, {"List Puppets", ListPuppets},
+            {"Find Legendaries", FindLegendaries}, {"Generate Issue Links", Issues_Links},
+            {"Generate Pack Links", Pack_Links}, {"Find Owners", FindOwner},
+            {"Junker", Junker}, {"Fetch Deck Info", GetCardInfo},
+            {"Config", ConfigMenu}
         };
-        SetupFunctions = new() {
+        ConfigFunctions = new() {
             {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
-            {"Generate Junk Links", Junk_Links}, {"Create Database",CreateCardsDB},
-            {"Generate Issue Links", Issues_Links}, {"Exit", null}
+            {"Create Database",CreateCardsDB}, {"Regenerate Views", CreateViews},
+            {"Back", null}
         };
 
         MainMenu = new SelectionPrompt<string>()
@@ -50,7 +52,7 @@ public partial class Tarot
             .AddChoices(Functions.Keys);
         SetupMenu = new SelectionPrompt<string>()
             .Title("Select Function")
-            .AddChoices(SetupFunctions.Keys);
+            .AddChoices(ConfigFunctions.Keys);
     }
 
     // Helper Methods
@@ -77,6 +79,7 @@ public partial class Tarot
         return chart;
     }
 
+    // Main menu
     public async Task<int> Execute()
     {
         AnsiConsole.MarkupLine("[red]ooooooooooo   o      oooooooooo    ooooooo   ooooooooooo\n88  888  88  888      888    888 o888   888o 88  888  88 \n    888     8  88     888oooo88  888     888     888     \n    888    8oooo88    888  88o   888o   o888     888     \n   o888o o88o  o888o o888o  88o8   88ooo88      o888o[/]");
@@ -93,134 +96,15 @@ public partial class Tarot
         }
     }
 
-    async Task ListPuppets()
+    // Config submenu
+    async Task ConfigMenu()
     {
-        var SortMode = AnsiConsole.Prompt(new SelectionPrompt<string>()
-        .Title("Select Sorting mode")
-        .AddChoices(new[] {
-            "1. DeckValue", "2. Junk Value",
-            "3. Bank", "4. NumCards", "5. DV-JV",
-            "6. JV + Bank"
-        }));
-        List<PuppetViewEntry> PuppetData;
-        switch(SortMode[0])
+        while(true)
         {
-            case '1':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue DESC");
-                break;
-            case '2':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue DESC");
-                break;
-            case '3':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY Bank DESC");
-                break;
-            case '4':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY Num_Cards DESC");
-                break;
-            case '5':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY DeckValue - JunkValue DESC");
-                break;
-            case '6':
-                PuppetData = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats ORDER BY JunkValue + Bank DESC");
-                break;
-            default:
+            var Operation = AnsiConsole.Prompt(SetupMenu);
+            if(Operation == "Exit")
                 return;
-        }
-
-        List<DeckViewEntry> DeckData = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView");
-
-        var table = new Table()
-            .MinimalDoubleHeadBorder();;
-        table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards").AddColumn("Breakdown");
-        foreach(var puppet in PuppetData)
-        {
-            var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue + puppet.Bank, puppet.DeckValue,
-                Math.Round(puppet.DeckValue - puppet.JunkValue, 2), puppet.Num_Cards)
-                .Prepend(Linkify(Helpers.SanitizeName(puppet.Name)))
-                .Append(await GenerateBreakdown(DeckData.Where(P=>P.Owner == puppet.Name).ToArray()));
-            table.AddRow(Items);
-        }
-        table.AddRow(MarkWrapMany("Total", PuppetData.Sum(P=>P.Bank), PuppetData.Sum(P=>P.JunkValue), PuppetData.Sum(P=>P.DeckValue),
-            "-", PuppetData.Sum(P=>P.Num_Cards), "-"));
-        AnsiConsole.Write(table);
-
-    }
-
-    async Task FindLegendaries()
-    {
-        var owners = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView WHERE RarityInt = 5");
-        var table = new Table()
-            .MinimalDoubleHeadBorder();
-        table.AddColumn("Owner").AddColumn("Card").AddColumn("Rarity").AddColumn("Season");
-        foreach(var owner in owners)
-            table.AddRow(MarkWrapMany(owner.Name, owner.Season, owner.Rarity).Prepend(Linkify(owner.Owner)));
-        AnsiConsole.Write(table);
-    }
-
-    async Task FindOwner()
-    {
-        bool Run = true;
-        while(Run)
-        {
-            string search = AnsiConsole.Ask<string>("Card Name (exit to stop)");
-            if(search.Trim().ToLower() == "exit")
-                return;
-            var card = Helpers.SanitizeName(search);
-            var owners = await Database.QueryAsync<DeckViewEntry>("SELECT * FROM DeckView WHERE Name = ?", card);
-            var table = new Table();
-            table.AddColumn("Owner").AddColumn("Card").AddColumn("Season");
-            foreach(var owner in owners)
-                table.AddRow(owner.Owner, owner.Name, owner.Season.ToString());
-            AnsiConsole.Write(table);
-        }
-    }
-
-    async Task<DBCard[]> FindCard(string cardName, int season = 0)
-    {
-        if(season < 0 || season > 3)
-            season = 0;
-        List<DBCard> cards;
-        if(season != 0)
-            cards = await Database.QueryAsync<DBCard>("SELECT * FROM Cards WHERE Name = ? AND Season = ?", cardName, season);
-        else
-            cards = await Database.QueryAsync<DBCard>("SELECT * FROM Cards WHERE Name = ?", cardName, season);
-        
-        return cards.ToArray();
-    }
-
-    async Task GetPuppetInfo()
-    {
-        DBPuppet[] Puppets = await Database.Table<DBPuppet>().ToArrayAsync();
-        await Database.CreateTableAsync<DeckDB>();
-        await Database.CreateTableAsync<PuppetData>();
-        await Database.DeleteAllAsync<DeckDB>();
-        await Database.DeleteAllAsync<PuppetData>();
-        foreach(var Puppet in Puppets)
-        {
-            AnsiConsole.MarkupLine($"Fetching data for {Puppet.Puppet}");
-            try{
-                var Result = await NSAPI.Instance.GetAPI<CardsAPI>($"https://www.nationstates.net/cgi-bin/api.cgi?q=cards+deck+info;nationname={Puppet.Puppet}");
-                var Deck = Result.Data.Deck.Select(D=>new DeckDB() {
-                    Owner = Puppet.Puppet,
-                    ID = D.ID,
-                    Rarity = DBCard.RarityToInt(D.Rarity),
-                    Season = D.Season
-                }).ToArray();
-                await Database.InsertAllAsync(Deck);
-                var DeckInfo = Result.Data.Deck_Info;
-                await Database.InsertAsync(new PuppetData() {
-                    Name = Puppet.Puppet,
-                    Bank = DeckInfo.Bank,
-                    Deck_Value = DeckInfo.DeckValue,
-                    Num_Cards = DeckInfo.Num_Cards
-                });
-                System.Threading.Thread.Sleep(800);
-            }
-            catch(Exception e)
-            {
-                AnsiConsole.MarkupLine($"Failed to get deck information for {Puppet.Puppet}");
-                AnsiConsole.WriteException(e);
-            }
+            await ConfigFunctions[Operation]();
         }
     }
 }

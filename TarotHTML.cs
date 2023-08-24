@@ -91,12 +91,14 @@ document.querySelectorAll(""a"").forEach(function(el) {{
         {"TG Settings", "page=tgsettings"},
     }.AsReadOnly();
 
-    public static string MakeURI(string puppet, string target) =>
-        $"https://www.nationstates.net/container={puppet}/nation={puppet}/" + target + $"/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian";
+    public static string MakeURI(string puppet, string target, bool AutoCloseNoTemplate = true) =>
+        $"https://www.nationstates.net/container={puppet}/nation={puppet}/" + target + $"/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian" + (AutoCloseNoTemplate ? "/template-overall=none/autoclose=1" : "");
 
-    public static string MakeURI(string puppet) =>
-        $"https://www.nationstates.net/container={puppet}/nation={puppet}/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian";
+    public static string MakeURI(string puppet, bool AutoCloseNoTemplate = true) =>
+        $"https://www.nationstates.net/container={puppet}/nation={puppet}/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian" + (AutoCloseNoTemplate ? "/template-overall=none/autoclose=1" : "");
 
+    public static string JunkLink(string puppet, DeckViewEntry card, bool AutoCloseNoTemplate = true) =>
+        MakeURI(puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}", AutoCloseNoTemplate);
 
     public static async Task Generate_Issue_Links(NationAPI[] Issues)
     {
@@ -110,7 +112,7 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             {
                 output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
                 if(Issue.IssueID == 407)
-                    output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "page=show_dilemma/dilemma=407/template-overall=none")}\">{canon} Issue {Issue.IssueID}</a></p></td>\n";
+                    output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "page=show_dilemma/dilemma=407/template-overall=none", false)}\">{canon} Issue {Issue.IssueID}</a></p></td>\n";
                 else
                 {
                     output += $"<td><p>{Puppet.name} Issue {Issue.IssueID}</p>";
@@ -127,6 +129,25 @@ document.querySelectorAll(""a"").forEach(function(el) {{
         await File.WriteAllTextAsync("issue_links.html", output);
     }
 
+    public static async Task Generate_Pack_Links(PuppetData[] Puppets, bool AutoClose)
+    {
+        string output = template_start;
+        int Number = 1;
+        int Count = Puppets.Sum(P=>P.Num_Packs);
+        foreach(var Puppet in Puppets)
+        {
+            string canon = NSDotnet.Helpers.SanitizeName(Puppet.Name);
+            for(int i = 0; i < Puppet.Num_Packs; i++)
+            {
+                output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "/page=deck?open_loot_box=1", AutoClose)}\">{canon} Pack {i}</a></p></td>\n";
+                output += $"</tr>\n";
+            }
+        }
+        output += template_end;
+        await File.WriteAllTextAsync("pack_links.html", output);
+    }
+
     public static async Task Generate_Junk_Links((string Puppet, DeckViewEntry[] Cards)[] Junk)
     {
         string output = template_start;
@@ -136,10 +157,9 @@ document.querySelectorAll(""a"").forEach(function(el) {{
         {
             foreach(var card in Puppet.Cards)
             {
-                string uri = MakeURI(Puppet.Puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}");
                 output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-                output += $"<td><p><a target=\"_blank\" href=\"{uri}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n";
-                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(Puppet.Puppet, $"page=deck/card={card.ID}/season={card.Season}/gift=1")}\">Gift</a></p></td></tr>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{JunkLink(Puppet.Puppet, card)}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(Puppet.Puppet, $"page=deck/card={card.ID}/season={card.Season}/gift=1", false)}\">Gift</a></p></td></tr>\n";
             }
         }
         output += template_end;
@@ -159,10 +179,10 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             Containerize_Container += $"@^.*\\.nationstates\\.net/(.*/)?container={canon}(/.*)?$ , {canon}\n";
             Containerize_Nation += $"@^.*\\.nationstates\\.net/(.*/)?nation={canon}(/.*)?$ , {canon}\n";
             output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-            output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon)}\">{canon}</a></p></td>\n";
+            output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, false)}\">{canon}</a></p></td>\n";
             foreach(KeyValuePair<string, string> lnk in Links)
                 output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, lnk.Value)}\">{lnk.Key}</a></p></td>\n";
-            output += $"\t<td class=\"createcol\"><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=blank/template-overall=none/x-rces-cp?x-rces-cp-nation={canon}")}\">Create {canon}</a></p></td>\n";
+            output += $"\t<td class=\"createcol\"><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=blank/template-overall=none/x-rces-cp?x-rces-cp-nation={canon}", false)}\">Create {canon}</a></p></td>\n";
             output += "</tr>\n";
         }
         output += template_end;

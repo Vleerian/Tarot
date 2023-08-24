@@ -48,54 +48,11 @@ public partial class Tarot
         await Database.ExecuteAsync("DELETE FROM PuppetMap WHERE rowid NOT IN ( SELECT MIN(rowid)  FROM PuppetMap  GROUP BY Puppet, Password )"); 
     }
 
-    async Task GenMenu()
-    {
-        while(true)
-        {
-            var Operation = AnsiConsole.Prompt(SetupMenu);
-            if(Operation == "Exit")
-                return;
-            await SetupFunctions[Operation]();
-        }
-    }
-
     async Task Puppet_Links()
     {
         string[] Puppets = (await Database.QueryAsync<DBPuppet>("SELECT * FROM PuppetMap;"))
             .Select(P=>P.Puppet).ToArray();
         await TarotHTML.Generate_Puppet_Links(Puppets);
-    }
-
-    async Task Junk_Links()
-    {
-        float Threshhold = (float)Math.Round(AnsiConsole.Ask<float>("∆V Threshhold: "), 2);
-        var Puppets = await Database.QueryAsync<PuppetViewEntry>("SELECT * FROM PuppetStats WHERE DeckValue - JunkValue < ?;", Threshhold);
-        var Cards = (await Database.Table<DeckViewEntry>().ToListAsync())
-            .GroupBy( C => C.Owner)
-            .Where( G => Puppets.Any(P=>P.Name == G.First().Owner))
-            .Select( C => (C.First().Owner, C.ToArray()))
-            .ToArray();
-        await TarotHTML.Generate_Junk_Links(Cards);
-    }
-
-    async Task Issues_Links()
-    {
-        var Puppets = await Database.Table<DBPuppet>().ToArrayAsync();
-        List<NationAPI> Issues = new();
-        foreach(var puppet in Puppets)
-        {
-            AnsiConsole.MarkupLine($"Fetching issues data for [yellow]{puppet.Puppet}[/]");
-            await Task.Delay(600);
-            NSAPI.Instance.Auth = new NSAuth(NSDotnet.Enums.AuthType.Autologin, puppet.Password);
-            var Request = await NSAPI.Instance.GetAPI<NationAPI>($"https://www.nationstates.net/cgi-bin/api.cgi?nation={puppet.Puppet}&q=name+issues");
-            if(Request.Response.StatusCode != System.Net.HttpStatusCode.OK)
-            {
-                AnsiConsole.MarkupLine($"[red]Failed[/]");
-                continue;
-            }
-            Issues.Add(Request.Data);
-        }
-        await TarotHTML.Generate_Issue_Links(Issues.ToArray());
     }
 
     async Task CreateCardsDB()
@@ -113,16 +70,37 @@ public partial class Tarot
             var dump = Helpers.BetterDeserialize<CardsDataDump>(RawXML);
             await Database.InsertAllAsync(dump.CardSet.Cards.Select(C => new DBCard(C, Season)));
             // Create a few utiltiy tables to contain basic data
-            await Database.ExecuteAsync("CREATE TABLE CommonInfo (\"Rarity\" integer, \"Name\" varchar, \"JunkValue\" float);");
-            foreach(var Rarity in DBCard.Rarities)
-            {
-                int index = Array.IndexOf(DBCard.Rarities, Rarity);
-                await Database.ExecuteAsync("INSERT INTO CommonInfo VALUES (?, ?)", index, Rarity, DBCard.JunkValues[index]);
-            }
-            // Create views
-            await Database.ExecuteAsync("CREATE VIEW CardData AS SELECT ID, Season, Cards.Name, CommonInfo.Name AS Rarity, Region, JunkValue, Cards.Rarity AS RarityInt FROM Cards INNER JOIN CommonInfo ON Cards.Rarity = CommonInfo.Rarity;");
-            await Database.ExecuteAsync("CREATE VIEW DeckView AS SELECT Deck.ID, Deck.Season, Owner, CardData.Name, CardData.Rarity, CardData.Region, CardData.JunkValue, CardData.RarityInt FROM Deck INNER JOIN CardData ON CardData.ID = Deck.ID AND CardData.Season = Deck.Season");
-            await Database.ExecuteAsync("CREATE VIEW PuppetStats AS SELECT Name, ROUND(Bank, 2) AS Bank, IFNULL(JunkValue, 0) AS JunkValue, ROUND(Deck_Value, 2) AS DeckValue, Num_Cards FROM PuppetData LEFT JOIN (SELECT Owner, COUNT(Owner) AS Cards, ROUND(SUM(JunkValue), 2) AS JunkValue FROM DeckView GROUP BY Owner) AS pups_1 ON PuppetData.Name = pups_1.Owner;");
         }
+
+        AnsiConsole.WriteLine("Creating views...");
+        await CreateViews();
+    }
+
+    async Task CreateViews()
+    {
+        // In case the user is regenerating the views
+        await Database.ExecuteAsync("DROP VIEW IF EXISTS PuppetStats");
+        await Database.ExecuteAsync("DROP VIEW IF EXISTS DeckView");
+        await Database.ExecuteAsync("DROP VIEW IF EXISTS CardData");
+        await Database.ExecuteAsync("DROP TABLE IF EXISTS CommonInfo");
+
+        // Update all the tables
+        await Database.CreateTableAsync<DBCard>();
+        await Database.CreateTableAsync<DBPuppet>();
+        await Database.CreateTableAsync<DeckDB>();
+        await Database.CreateTableAsync<PuppetData>();
+        await Database.CreateTableAsync<DBPuppet>();
+
+        // Create the CommonInfo table used to provide rarity names and junk value
+        await Database.ExecuteAsync("CREATE TABLE CommonInfo (\"Rarity\" integer, \"Name\" varchar, \"JunkValue\" float);");
+        foreach(var Rarity in DBCard.Rarities)
+        {
+            int index = Array.IndexOf(DBCard.Rarities, Rarity);
+            await Database.ExecuteAsync("INSERT INTO CommonInfo VALUES (?, ?, ?)", index, Rarity, DBCard.JunkValues[index]);
+        }
+        // Create views
+        await Database.ExecuteAsync("CREATE VIEW CardData AS SELECT ID, Season, Cards.Name, CommonInfo.Name AS Rarity, Region, JunkValue, Cards.Rarity AS RarityInt, ROUND(MarketValue, 2) AS MarketValue, ROUND(TopBuy, 2) AS TopBuy, Owners FROM Cards INNER JOIN CommonInfo ON Cards.Rarity = CommonInfo.Rarity");
+        await Database.ExecuteAsync("CREATE VIEW DeckView AS SELECT Deck.ID, Deck.Season, Owner, CardData.Name, CardData.Rarity, CardData.Region, CardData.JunkValue, CardData.RarityInt, MarketValue, TopBuy, Owners FROM Deck INNER JOIN CardData ON CardData.ID = Deck.ID AND CardData.Season = Deck.Season");
+        await Database.ExecuteAsync("CREATE VIEW PuppetStats AS SELECT Name, ROUND(Bank, 2) AS Bank, IFNULL(JunkValue, 0) AS JunkValue, ROUND(Deck_Value, 2) AS DeckValue, Num_Cards FROM PuppetData LEFT JOIN (SELECT Owner, COUNT(Owner) AS Cards, ROUND(SUM(JunkValue), 2) AS JunkValue FROM DeckView GROUP BY Owner) AS pups_1 ON PuppetData.Name = pups_1.Owner;");
     }
 }
