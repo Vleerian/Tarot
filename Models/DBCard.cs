@@ -49,4 +49,7 @@ public class DBCard
     public string Name { get; init; }
     public string Region { get; init; }
     public int Rarity { get; init; }
+    public float MarketValue { get; init; }
+    public float TopBuy { get; init; }
+    public string Owners { get; init; }
 }

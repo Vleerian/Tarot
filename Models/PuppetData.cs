@@ -20,12 +20,13 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 #endregion
 
-public class PuppetViewEntry
+public class PuppetData
 {
     [PrimaryKey]
     public string Name { get; init; }
     public float Bank { get; init; }
-    public float JunkValue { get; init; }
-    public float DeckValue { get; init; }
+    public float Deck_Value { get; init; }
     public int Num_Cards { get; init; }
+    public int Num_Issues { get; init; }
+    public int Num_Packs { get; init; }
 }

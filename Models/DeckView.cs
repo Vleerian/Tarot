@@ -31,4 +31,17 @@ public class DeckViewEntry
     public string Region { get; init; }
     public float JunkValue { get; init; }
     public int RarityInt { get; init; }
+    public float MarketValue { get; init; }
+    public float TopBuy { get; init; }
+    public string owners { get; init; }
+    [Ignore]
+    public string[] Owners {
+        get {
+            if(owners == null || owners == string.Empty )
+                return new string[0];
+            if(owners.Contains(","))
+                return owners.Split(",");
+            return new string[]{owners};
+        }
+    }
 }
