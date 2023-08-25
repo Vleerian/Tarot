@@ -41,10 +41,10 @@ public partial class Tarot
 
     async Task Pack_Links()
     {
-        var Puppets = await Database.Table<PuppetData>().ToArrayAsync();
         if(AnsiConsole.Confirm("Request packs info?"))
             await Fetch_Puppet_Data();
         bool AutoClose = AnsiConsole.Confirm("AutoClose Pack Links?");
+        var Puppets = await Database.Table<PuppetData>().ToArrayAsync();
         await TarotHTML.Generate_Pack_Links(Puppets.ToArray(), AutoClose);
     }
 }
