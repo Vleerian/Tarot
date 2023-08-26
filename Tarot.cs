@@ -26,35 +26,6 @@ public partial class Tarot
         {"legendary",Color.Magenta1}
     };
 
-    // Menu setup
-    Dictionary<string, TarotFunction> Functions;
-    SelectionPrompt<string> MainMenu;
-    Dictionary<string, TarotFunction> ConfigFunctions;
-    SelectionPrompt<string> SetupMenu;
-
-    public Tarot()
-    {
-        Functions = new() {
-            {"Fetch Puppet Info", GetPuppetInfo}, {"List Puppets", ListPuppets},
-            {"Find Legendaries", FindLegendaries}, {"Generate Issue Links", Issues_Links},
-            {"Generate Pack Links", Pack_Links}, {"Find Owners", FindOwner},
-            {"Junker", Junker}, {"Fetch Deck Info", GetCardInfo},
-            {"Config", ConfigMenu}
-        };
-        ConfigFunctions = new() {
-            {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
-            {"Create Database",CreateCardsDB}, {"Regenerate Views", CreateViews},
-            {"Back", null}
-        };
-
-        MainMenu = new SelectionPrompt<string>()
-            .Title("Select Function")
-            .AddChoices(Functions.Keys);
-        SetupMenu = new SelectionPrompt<string>()
-            .Title("Select Function")
-            .AddChoices(ConfigFunctions.Keys);
-    }
-
     // Helper Methods
     public static Markup Linkify(string puppet) =>
         new Markup($"[link=https://nationstates.net/container={puppet}/nation={puppet}]{puppet}[/]");
@@ -86,25 +57,34 @@ public partial class Tarot
         User = AnsiConsole.Ask<string>("Main Nation: ");
         NSAPI.Instance.UserAgent = $"Tarot/{TAROT_VERSION} (By Vleerian, vleerian@hotmail.com in use by {User})";
 
-        while(true)
-        {
-            string Operation = AnsiConsole.Prompt(MainMenu);
-            if(Operation == "Generation Functions")
-                await Functions[Operation]();
-            else
-                await Functions[Operation]();
-        }
+        await Menu(new() {
+            {"Fetch Puppet Info", GetPuppetInfo}, {"List Puppets", ListPuppets},
+            {"Find Legendaries", FindLegendaries}, {"Generate Issue Links", Issues_Links},
+            {"Generate Pack Links", Pack_Links}, {"Find Owners", FindOwner},
+            {"Junker", Junker}, {"Fetch Deck Info", GetCardInfo},
+            {"Config", ConfigMenu}, {"Exit", null}
+        });
+
+        return 0;
     }
 
     // Config submenu
-    async Task ConfigMenu()
+    Task ConfigMenu() => Menu(new() {
+        {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
+        {"Create Database",CreateCardsDB}, {"Regenerate Views", CreateViews},
+        {"Back", null}
+    });
+
+    async Task Menu(Dictionary<string, TarotFunction> MenuOptions)
     {
         while(true)
         {
-            var Operation = AnsiConsole.Prompt(SetupMenu);
-            if(Operation == "Exit")
+            var Operation = AnsiConsole.Prompt(new SelectionPrompt<string>()
+                .Title("Select Function")
+                .AddChoices(MenuOptions.Keys));
+            if(MenuOptions[Operation] == null)
                 return;
-            await ConfigFunctions[Operation]();
+            await MenuOptions[Operation]();
         }
     }
 }
