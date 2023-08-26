@@ -100,35 +100,6 @@ document.querySelectorAll(""a"").forEach(function(el) {{
     public static string JunkLink(string puppet, DeckViewEntry card, bool AutoCloseNoTemplate = true) =>
         MakeURI(puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}", AutoCloseNoTemplate);
 
-    public static async Task Generate_Issue_Links(NationAPI[] Issues)
-    {
-        string output = template_start;
-        int Number = 1;
-        int Count = Issues.Sum(I => I.Issues.Length);
-        foreach(var Puppet in Issues)
-        {
-            string canon = NSDotnet.Helpers.SanitizeName(Puppet.name);
-            foreach(var Issue in Puppet.Issues)
-            {
-                output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-                if(Issue.IssueID == 407)
-                    output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "page=show_dilemma/dilemma=407/template-overall=none", false)}\">{canon} Issue {Issue.IssueID}</a></p></td>\n";
-                else
-                {
-                    output += $"<td><p>{Puppet.name} Issue {Issue.IssueID}</p>";
-                    foreach(var opt in Issue.Options.OrderBy(I=>I.OptionID))
-                        output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=enact_dilemma/choice-{opt.OptionID}=1/dilemma={Issue.IssueID}")}\">Option {opt.OptionID}</a></p></td>";
-                    output += "</td>\n";
-                    int option = Issue.Options.MinBy(I=>I.OptionID).OptionID;
-                    
-                }
-                output += $"</tr>\n";
-            }
-        }
-        output += template_end;
-        await File.WriteAllTextAsync("issue_links.html", output);
-    }
-
     public static async Task Generate_Pack_Links(PuppetData[] Puppets, bool AutoClose)
     {
         string output = template_start;

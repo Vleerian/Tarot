@@ -33,12 +33,6 @@ public partial class Tarot
         return Data.ToArray();
     }
 
-    async Task Issues_Links()
-    {
-        var Puppets = await Fetch_Puppet_Data();
-        await TarotHTML.Generate_Issue_Links(Puppets);
-    }
-
     async Task Pack_Links()
     {
         if(AnsiConsole.Confirm("Request packs info?"))

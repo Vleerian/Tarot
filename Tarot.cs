@@ -57,11 +57,11 @@ public partial class Tarot
         User = AnsiConsole.Ask<string>("Main Nation: ");
         NSAPI.Instance.UserAgent = $"Tarot/{TAROT_VERSION} (By Vleerian, vleerian@hotmail.com in use by {User})";
 
-        await Menu(new() {
+        await Menu(new Dictionary<string, TarotFunction>() {
             {"Fetch Puppet Info", GetPuppetInfo}, {"List Puppets", ListPuppets},
-            {"Find Legendaries", FindLegendaries}, {"Generate Issue Links", Issues_Links},
-            {"Generate Pack Links", Pack_Links}, {"Find Owners", FindOwner},
-            {"Junker", Junker}, {"Fetch Deck Info", GetCardInfo},
+            {"Find Legendaries", FindLegendaries}, {"Generate Pack Links", Pack_Links}, 
+            {"Find Owners", FindOwner}, {"Junker", Junker},
+            {"Fetch Deck Info", GetCardInfo},
             {"Config", ConfigMenu}, {"Exit", null}
         });
 
@@ -69,7 +69,7 @@ public partial class Tarot
     }
 
     // Config submenu
-    Task ConfigMenu() => Menu(new() {
+    Task ConfigMenu() => Menu(new Dictionary<string, TarotFunction>() {
         {"Add Puppets",AddPuppets}, {"Generate Puppet Links", Puppet_Links},
         {"Create Database",CreateCardsDB}, {"Regenerate Views", CreateViews},
         {"Back", null}
