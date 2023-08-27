@@ -59,9 +59,9 @@ public partial class Tarot
 
         await Menu(new Dictionary<string, TarotFunction>() {
             {"Fetch Puppet Info", GetPuppetInfo}, {"List Puppets", ListPuppets},
-            {"Find Legendaries", FindLegendaries}, {"Generate Pack Links", Pack_Links}, 
-            {"Find Owners", FindOwner}, {"Junker", Junker},
-            {"Fetch Deck Info", GetCardInfo},
+            {"Find Legendaries", FindLegendaries}, {"Generate Issue Links", Issues_Links},
+            {"Generate Pack Links", Pack_Links}, {"Find Owners", FindOwner},
+            {"Junker", Junker}, {"Fetch Deck Info", GetCardInfo},
             {"Config", ConfigMenu}, {"Exit", null}
         });
 
