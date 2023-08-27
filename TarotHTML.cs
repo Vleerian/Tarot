@@ -111,7 +111,7 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             for(int i = 0; i < Puppet.Num_Packs; i++)
             {
                 output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "/page=deck?open_loot_box=1", AutoClose)}\">{canon} Pack {i}</a></p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, "page=deck?open_loot_box=1", AutoClose, AutoClose)}\">{canon} Pack {i}</a></p></td>\n";
                 output += $"</tr>\n";
             }
         }
@@ -129,7 +129,7 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             foreach(var card in Puppet.Cards)
             {
                 output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-                output += $"<td><p><a target=\"_blank\" href=\"{JunkLink(Puppet.Puppet, card)}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{JunkLink(Puppet.Puppet, card, true, true)}\">({Puppet.Puppet}) Season {card.Season} {card.Name}</a></p></td>\n";
                 output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(Puppet.Puppet, $"page=deck/card={card.ID}/season={card.Season}/gift=1", false)}\">Gift</a></p></td></tr>\n";
             }
         }
