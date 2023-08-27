@@ -91,14 +91,14 @@ document.querySelectorAll(""a"").forEach(function(el) {{
         {"TG Settings", "page=tgsettings"},
     }.AsReadOnly();
 
-    public static string MakeURI(string puppet, string target, bool AutoCloseNoTemplate = true) =>
-        $"https://www.nationstates.net/container={puppet}/nation={puppet}/" + target + $"/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian" + (AutoCloseNoTemplate ? "/template-overall=none/autoclose=1" : "");
+    public static string MakeURI(string puppet, string target, bool NoTemplate = true, bool AutoClose = true) =>
+        $"https://www.nationstates.net/container={puppet}/nation={puppet}/" + target + $"/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian" + (NoTemplate ? "/template-overall=none" : "") + (AutoClose ? "/autoclose=1" : "");
 
-    public static string MakeURI(string puppet, bool AutoCloseNoTemplate = true) =>
-        $"https://www.nationstates.net/container={puppet}/nation={puppet}/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian" + (AutoCloseNoTemplate ? "/template-overall=none/autoclose=1" : "");
+    public static string MakeURI(string puppet, bool NoTemplate = true, bool AutoClose = true) =>
+        $"https://www.nationstates.net/container={puppet}/nation={puppet}/User_Agent={NSAPI.Instance.UserAgent}/Script=Tarot/Author_Email=vleerian@hotmail.com/Author_Discord=Vleerian/Author_Main_Nation=Vleerian" + (NoTemplate ? "/template-overall=none" : "") + (AutoClose ? "/autoclose=1" : "");
 
-    public static string JunkLink(string puppet, DeckViewEntry card, bool AutoCloseNoTemplate = true) =>
-        MakeURI(puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}", AutoCloseNoTemplate);
+    public static string JunkLink(string puppet, DeckViewEntry card, bool NoTemplate = true, bool AutoClose = true) =>
+        MakeURI(puppet, $"page=ajax3/a=junkcard/card={card.ID}/season={card.Season}", NoTemplate, AutoClose);
 
     public static async Task Generate_Pack_Links(PuppetData[] Puppets, bool AutoClose)
     {
@@ -152,7 +152,7 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
             output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, false)}\">{canon}</a></p></td>\n";
             foreach(KeyValuePair<string, string> lnk in Links)
-                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, lnk.Value)}\">{lnk.Key}</a></p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, lnk.Value, false)}\">{lnk.Key}</a></p></td>\n";
             output += $"\t<td class=\"createcol\"><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=blank/template-overall=none/x-rces-cp?x-rces-cp-nation={canon}", false)}\">Create {canon}</a></p></td>\n";
             output += "</tr>\n";
         }
