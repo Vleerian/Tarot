@@ -150,10 +150,9 @@ document.querySelectorAll(""a"").forEach(function(el) {{
             Containerize_Container += $"@^.*\\.nationstates\\.net/(.*/)?container={canon}(/.*)?$ , {canon}\n";
             Containerize_Nation += $"@^.*\\.nationstates\\.net/(.*/)?nation={canon}(/.*)?$ , {canon}\n";
             output += $"<tr>\n\t<td><p>{Number++}/{Count}</p></td>\n";
-            output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, false)}\">{canon}</a></p></td>\n";
+            output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, false, false)}\">{canon}</a></p></td>\n";
             foreach(KeyValuePair<string, string> lnk in Links)
-                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, lnk.Value, false)}\">{lnk.Key}</a></p></td>\n";
-            output += $"\t<td class=\"createcol\"><p><a target=\"_blank\" href=\"{MakeURI(canon, $"page=blank/template-overall=none/x-rces-cp?x-rces-cp-nation={canon}", false)}\">Create {canon}</a></p></td>\n";
+                output += $"<td><p><a target=\"_blank\" href=\"{MakeURI(canon, lnk.Value, true, false)}\">{lnk.Key}</a></p></td>\n";
             output += "</tr>\n";
         }
         output += template_end;
