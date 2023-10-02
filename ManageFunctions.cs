@@ -128,11 +128,11 @@ public partial class Tarot
 
         var table = new Table()
             .MinimalDoubleHeadBorder();;
-        table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards").AddColumn("Breakdown");
+        table.AddColumn("Puppet").AddColumn("Bank").AddColumn("JV").AddColumn("BV").AddColumn("DV").AddColumn("∆V").AddColumn("Cards").AddColumn("Breakdown");
         foreach(var puppet in PuppetData)
         {
-            var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue + puppet.Bank, puppet.DeckValue,
-                Math.Round(puppet.DeckValue - puppet.JunkValue, 2), puppet.Num_Cards)
+            var Items = MarkWrapMany(puppet.Bank, puppet.JunkValue, puppet.Bank + puppet.JunkValue,
+                puppet.DeckValue, Math.Round(puppet.DeckValue - puppet.JunkValue, 2), puppet.Num_Cards)
                 .Prepend(Linkify(Helpers.SanitizeName(puppet.Name)))
                 .Append(await GenerateBreakdown(DeckData.Where(P=>P.Owner == puppet.Name).ToArray()));
             table.AddRow(Items);
